@@ -82,28 +82,7 @@ const Navbar: React.FC = () => {
   const { user, logout, navigateTo } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!isUserMenuOpen) return;
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (!userMenuRef.current) return;
-      if (!userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('click', handleDocumentClick);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('click', handleDocumentClick);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isUserMenuOpen]);
 
   return (
     <nav className="sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/10">
@@ -152,9 +131,7 @@ const Navbar: React.FC = () => {
 
             {user ? (
               <div
-                ref={userMenuRef}
-                className="relative flex items-center gap-3"
-                onMouseEnter={() => setIsUserMenuOpen(true)}
+
                 onMouseLeave={() => setIsUserMenuOpen(false)}
               >
                  <div className="text-right hidden sm:block">
