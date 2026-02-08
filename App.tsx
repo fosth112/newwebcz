@@ -41,14 +41,14 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { MOCK_PRODUCTS, MOCK_BANNERS, MOCK_CATEGORIES, MOCK_SHORTCUTS, MOCK_USER, MOCK_LOGS, MOCK_ORDERS } from './constants';
+import { MOCK_PRODUCTS, MOCK_BANNERS, MOCK_CATEGORIES, MOCK_SHORTCUTS, MOCK_USER, ADMIN_USER, MOCK_LOGS, MOCK_ORDERS } from './constants';
 import { User, Product, Category, AppConfig, Log, Order } from './types';
 
 // --- Context & State Management ---
 
 interface AppContextType {
   user: User | null;
-  login: (email: string) => void;
+  login: (identifier: string, password: string) => boolean;
   logout: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
@@ -81,6 +81,7 @@ const useAppContext = () => {
 const Navbar: React.FC = () => {
   const { user, logout, navigateTo } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
     <nav className="sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/10">
@@ -128,27 +129,58 @@ const Navbar: React.FC = () => {
              </div>
 
             {user ? (
-              <div className="relative group flex items-center gap-3">
+              <div
+                className="relative flex items-center gap-3"
+                onMouseLeave={() => setIsUserMenuOpen(false)}
+              >
                  <div className="text-right hidden sm:block">
                     <p className="text-sm font-bold text-white">{user.username}</p>
                     <p className="text-xs text-cyan-400">฿{user.balance.toFixed(2)}</p>
                  </div>
-                 <img src={user.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-cyan-500/50 cursor-pointer" />
+                 <button
+                   type="button"
+                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                   className="focus:outline-none"
+                   aria-haspopup="menu"
+                   aria-expanded={isUserMenuOpen}
+                 >
+                   <img src={user.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-cyan-500/50 cursor-pointer" />
+                 </button>
                 
                 {/* Dropdown */}
-                <div className="absolute right-0 top-full mt-2 w-48 bg-[#0f172a] rounded-xl shadow-2xl py-2 hidden group-hover:block border border-white/10 animate-in fade-in slide-in-from-top-2">
-                  {user.role === 'ADMIN' && (
-                    <button onClick={() => navigateTo('admin')} className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm">
-                      <LayoutDashboard size={16} className="mr-2" /> จัดการระบบ
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#0f172a] rounded-xl shadow-2xl py-2 border border-white/10 animate-in fade-in slide-in-from-top-2">
+                    {user.role === 'ADMIN' && (
+                      <button
+                        onClick={() => {
+                          navigateTo('admin');
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm"
+                      >
+                        <LayoutDashboard size={16} className="mr-2" /> จัดการระบบ
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        navigateTo('profile');
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm"
+                    >
+                      <Settings size={16} className="mr-2" /> ตั้งค่าบัญชี
                     </button>
-                  )}
-                  <button onClick={() => navigateTo('profile')} className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm">
-                    <Settings size={16} className="mr-2" /> ตั้งค่าบัญชี
-                  </button>
-                  <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-white/5 text-red-400 flex items-center text-sm">
-                    <LogOut size={16} className="mr-2" /> ออกจากระบบ
-                  </button>
-                </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-white/5 text-red-400 flex items-center text-sm"
+                    >
+                      <LogOut size={16} className="mr-2" /> ออกจากระบบ
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -845,10 +877,18 @@ const LoginPage: React.FC = () => {
   const { login } = useAppContext();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
+    const success = login(email, password);
+    if (!success) {
+      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    } else {
+      setError('');
+      setPassword('');
+    }
   };
 
   return (
@@ -865,14 +905,14 @@ const LoginPage: React.FC = () => {
 
          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             <div>
-               <label className="block text-sm font-medium mb-1 text-gray-400">อีเมล</label>
+               <label className="block text-sm font-medium mb-1 text-gray-400">อีเมล / ชื่อผู้ใช้ / เบอร์โทร</label>
                <input 
-                 type="email" 
+                 type="text" 
                  required
                  value={email}
                  onChange={(e) => setEmail(e.target.value)}
                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/50 text-white focus:border-cyan-500 focus:outline-none transition-all"
-                 placeholder="name@example.com"
+                 placeholder="name@example.com หรือ admin"
                />
             </div>
             <div>
@@ -880,10 +920,15 @@ const LoginPage: React.FC = () => {
                <input 
                  type="password" 
                  required
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/50 text-white focus:border-cyan-500 focus:outline-none transition-all"
                  placeholder="••••••••"
                />
             </div>
+            {error && (
+              <p className="text-sm text-red-400">{error}</p>
+            )}
             
             <button type="submit" className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-[1.02]">
                {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
@@ -908,6 +953,9 @@ const LoginPage: React.FC = () => {
              {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
            </button>
          </div>
+         <p className="mt-4 text-xs text-gray-500 text-center relative z-10">
+           สำหรับแอดมินใช้ชื่อผู้ใช้ <span className="text-cyan-400">admin</span> และรหัสผ่าน <span className="text-cyan-400">0895151168</span>
+         </p>
       </div>
     </div>
   );
@@ -1003,19 +1051,31 @@ const App: React.FC = () => {
     document.documentElement.classList.add('dark');
   }, []);
 
-  const login = (email: string) => {
-    const newUser = { ...MOCK_USER, email: email };
+  const login = (identifier: string, password: string) => {
+    const trimmedIdentifier = identifier.trim();
+    const isAdminIdentifier = trimmedIdentifier.toLowerCase() === 'admin' || trimmedIdentifier === '0895151168';
+    const isAdminLogin = isAdminIdentifier && password === '0895151168';
+    if (isAdminIdentifier && !isAdminLogin) {
+      return false;
+    }
+    const displayName = trimmedIdentifier.includes('@')
+      ? trimmedIdentifier.split('@')[0]
+      : trimmedIdentifier || 'DemoUser';
+    const newUser = isAdminLogin
+      ? { ...ADMIN_USER }
+      : { ...MOCK_USER, email: trimmedIdentifier, username: displayName };
     setUser(newUser);
     const newLog: Log = {
       id: Date.now().toString(),
       userId: newUser.id,
       action: 'Login',
-      details: 'Logged in successfully',
+      details: isAdminLogin ? 'Admin logged in successfully' : 'Logged in successfully',
       timestamp: new Date().toISOString(),
       type: 'AUTH'
     };
     setLogs([newLog, ...logs]);
     setCurrentPage('home');
+    return true;
   };
 
   const logout = () => {

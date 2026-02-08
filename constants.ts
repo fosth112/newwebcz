@@ -91,10 +91,20 @@ export const MOCK_USER: User = {
   id: 'u1',
   username: 'DemoUser',
   email: 'demo@example.com',
-  role: 'ADMIN',
+  role: 'USER',
   points: 500,
   balance: 1500.00,
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+};
+
+export const ADMIN_USER: User = {
+  id: 'admin-1',
+  username: 'admin',
+  email: 'admin@xdvzstudio.com',
+  role: 'ADMIN',
+  points: 999,
+  balance: 9999.00,
+  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
 };
 
 export const MOCK_LOGS: Log[] = [
