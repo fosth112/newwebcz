@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
+import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
 import { 
   ShoppingBag, 
   User as UserIcon, 
@@ -83,6 +83,7 @@ const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+
   return (
     <nav className="sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -130,7 +131,7 @@ const Navbar: React.FC = () => {
 
             {user ? (
               <div
-                className="relative flex items-center gap-3"
+
                 onMouseLeave={() => setIsUserMenuOpen(false)}
               >
                  <div className="text-right hidden sm:block">
