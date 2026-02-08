@@ -81,6 +81,7 @@ const useAppContext = () => {
 const Navbar: React.FC = () => {
   const { user, logout, navigateTo } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
     <nav className="sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/10">
@@ -128,27 +129,58 @@ const Navbar: React.FC = () => {
              </div>
 
             {user ? (
-              <div className="relative group flex items-center gap-3">
+              <div
+                className="relative flex items-center gap-3"
+                onMouseLeave={() => setIsUserMenuOpen(false)}
+              >
                  <div className="text-right hidden sm:block">
                     <p className="text-sm font-bold text-white">{user.username}</p>
                     <p className="text-xs text-cyan-400">฿{user.balance.toFixed(2)}</p>
                  </div>
-                 <img src={user.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-cyan-500/50 cursor-pointer" />
+                 <button
+                   type="button"
+                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                   className="focus:outline-none"
+                   aria-haspopup="menu"
+                   aria-expanded={isUserMenuOpen}
+                 >
+                   <img src={user.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-cyan-500/50 cursor-pointer" />
+                 </button>
                 
                 {/* Dropdown */}
-                <div className="absolute right-0 top-full mt-2 w-48 bg-[#0f172a] rounded-xl shadow-2xl py-2 hidden group-hover:block border border-white/10 animate-in fade-in slide-in-from-top-2">
-                  {user.role === 'ADMIN' && (
-                    <button onClick={() => navigateTo('admin')} className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm">
-                      <LayoutDashboard size={16} className="mr-2" /> จัดการระบบ
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#0f172a] rounded-xl shadow-2xl py-2 border border-white/10 animate-in fade-in slide-in-from-top-2">
+                    {user.role === 'ADMIN' && (
+                      <button
+                        onClick={() => {
+                          navigateTo('admin');
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm"
+                      >
+                        <LayoutDashboard size={16} className="mr-2" /> จัดการระบบ
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        navigateTo('profile');
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm"
+                    >
+                      <Settings size={16} className="mr-2" /> ตั้งค่าบัญชี
                     </button>
-                  )}
-                  <button onClick={() => navigateTo('profile')} className="w-full text-left px-4 py-2 hover:bg-white/5 text-gray-300 flex items-center text-sm">
-                    <Settings size={16} className="mr-2" /> ตั้งค่าบัญชี
-                  </button>
-                  <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-white/5 text-red-400 flex items-center text-sm">
-                    <LogOut size={16} className="mr-2" /> ออกจากระบบ
-                  </button>
-                </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-white/5 text-red-400 flex items-center text-sm"
+                    >
+                      <LogOut size={16} className="mr-2" /> ออกจากระบบ
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-2">
