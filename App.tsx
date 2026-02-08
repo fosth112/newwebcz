@@ -41,14 +41,14 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { MOCK_PRODUCTS, MOCK_BANNERS, MOCK_CATEGORIES, MOCK_SHORTCUTS, MOCK_USER, MOCK_LOGS, MOCK_ORDERS } from './constants';
+import { MOCK_PRODUCTS, MOCK_BANNERS, MOCK_CATEGORIES, MOCK_SHORTCUTS, MOCK_USER, ADMIN_USER, MOCK_LOGS, MOCK_ORDERS } from './constants';
 import { User, Product, Category, AppConfig, Log, Order } from './types';
 
 // --- Context & State Management ---
 
 interface AppContextType {
   user: User | null;
-  login: (email: string) => void;
+  login: (identifier: string, password: string) => boolean;
   logout: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
@@ -845,10 +845,18 @@ const LoginPage: React.FC = () => {
   const { login } = useAppContext();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
+    const success = login(email, password);
+    if (!success) {
+      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    } else {
+      setError('');
+      setPassword('');
+    }
   };
 
   return (
@@ -865,14 +873,14 @@ const LoginPage: React.FC = () => {
 
          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             <div>
-               <label className="block text-sm font-medium mb-1 text-gray-400">อีเมล</label>
+               <label className="block text-sm font-medium mb-1 text-gray-400">อีเมล / ชื่อผู้ใช้ / เบอร์โทร</label>
                <input 
-                 type="email" 
+                 type="text" 
                  required
                  value={email}
                  onChange={(e) => setEmail(e.target.value)}
                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/50 text-white focus:border-cyan-500 focus:outline-none transition-all"
-                 placeholder="name@example.com"
+                 placeholder="name@example.com หรือ admin"
                />
             </div>
             <div>
@@ -880,10 +888,15 @@ const LoginPage: React.FC = () => {
                <input 
                  type="password" 
                  required
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/50 text-white focus:border-cyan-500 focus:outline-none transition-all"
                  placeholder="••••••••"
                />
             </div>
+            {error && (
+              <p className="text-sm text-red-400">{error}</p>
+            )}
             
             <button type="submit" className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-[1.02]">
                {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
@@ -908,6 +921,9 @@ const LoginPage: React.FC = () => {
              {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
            </button>
          </div>
+         <p className="mt-4 text-xs text-gray-500 text-center relative z-10">
+           สำหรับแอดมินใช้ชื่อผู้ใช้ <span className="text-cyan-400">admin</span> และรหัสผ่าน <span className="text-cyan-400">0895151168</span>
+         </p>
       </div>
     </div>
   );
@@ -1003,19 +1019,31 @@ const App: React.FC = () => {
     document.documentElement.classList.add('dark');
   }, []);
 
-  const login = (email: string) => {
-    const newUser = { ...MOCK_USER, email: email };
+  const login = (identifier: string, password: string) => {
+    const trimmedIdentifier = identifier.trim();
+    const isAdminIdentifier = trimmedIdentifier.toLowerCase() === 'admin' || trimmedIdentifier === '0895151168';
+    const isAdminLogin = isAdminIdentifier && password === '0895151168';
+    if (isAdminIdentifier && !isAdminLogin) {
+      return false;
+    }
+    const displayName = trimmedIdentifier.includes('@')
+      ? trimmedIdentifier.split('@')[0]
+      : trimmedIdentifier || 'DemoUser';
+    const newUser = isAdminLogin
+      ? { ...ADMIN_USER }
+      : { ...MOCK_USER, email: trimmedIdentifier, username: displayName };
     setUser(newUser);
     const newLog: Log = {
       id: Date.now().toString(),
       userId: newUser.id,
       action: 'Login',
-      details: 'Logged in successfully',
+      details: isAdminLogin ? 'Admin logged in successfully' : 'Logged in successfully',
       timestamp: new Date().toISOString(),
       type: 'AUTH'
     };
     setLogs([newLog, ...logs]);
     setCurrentPage('home');
+    return true;
   };
 
   const logout = () => {
